@@ -12,7 +12,6 @@ import { Typography } from '@alfalab/core-components/typography/cssm';
 import { BanknotesMIcon } from '@alfalab/icons-glyph/BanknotesMIcon';
 import { CategoryCommisionMIcon } from '@alfalab/icons-glyph/CategoryCommisionMIcon';
 import { CategoryInvoiceMIcon } from '@alfalab/icons-glyph/CategoryInvoiceMIcon';
-import { CheckmarkMIcon } from '@alfalab/icons-glyph/CheckmarkMIcon';
 import { ChevronDownMIcon } from '@alfalab/icons-glyph/ChevronDownMIcon';
 import { ChevronUpMIcon } from '@alfalab/icons-glyph/ChevronUpMIcon';
 import { GiftBoxMIcon } from '@alfalab/icons-glyph/GiftBoxMIcon';
@@ -158,17 +157,13 @@ const investPeriods = [
 
 const MIN_INVEST_SUM = 60_000;
 
-const docNumberPds = randomDocNumber();
 const docNumberVklad = randomDocNumber();
 const emailRu = randomEmailRu();
 
 export const App = () => {
-  const [loading, setLoading] = useState(false);
   const [thxShow, setThx] = useState(LS.getItem(LSKeys.ShowThx, false));
   const [collapsedItems, setCollapsedItem] = useState<string[]>([]);
-  const [steps, setSteps] = useState<'init' | 'step1' | 'step2' | 'step-confirm3' | 'step-confirmed3' | 'step3' | 'step4'>(
-    'init',
-  );
+  const [steps, setSteps] = useState<'init' | 'step1' | 'step2' | 'step3'>('init');
   const [sum, setSum] = useState(MIN_INVEST_SUM);
   const [error, setError] = useState('');
   const [invetstPeriod, setInvestPeriod] = useState<number>(1);
@@ -183,7 +178,7 @@ export const App = () => {
   const investmentsIncome = calculateInvestmentIncome(pdsSum, 0);
   const total = investmentsIncome + govCharity + taxRefund;
 
-  const withOtpCode = steps === 'step-confirm3' || steps === 'step4';
+  const withOtpCode = steps === 'step3';
 
   useTimeout(
     () => {
@@ -193,16 +188,10 @@ export const App = () => {
   );
   useTimeout(
     () => {
-      if (steps === 'step-confirm3') {
-        setSteps('step-confirmed3');
-      }
-      if (steps === 'step4') {
-        setLoading(true);
-        setThx(true);
-        setLoading(false);
-        // TODO Submit
-      }
-      setOtpCode('');
+      window.gtag('event', '7106_sms_pds_deposit', { var: 'var2' });
+
+      setThx(true);
+      // TODO Submit
     },
     withOtpCode ? 3500 : null,
   );
@@ -214,8 +203,6 @@ export const App = () => {
   }, []);
 
   const submit = () => {
-    setLoading(true);
-
     // sendDataToGA({
     //   autopayments: Number(checked) as 1 | 0,
     //   limit: Number(checked2) as 1 | 0,
@@ -228,20 +215,16 @@ export const App = () => {
     //   setLoading(false);
     // });
     setThx(true);
-    setLoading(false);
   };
 
   const goToStep2 = () => {
+    window.gtag('event', '7106_click_open_pds_deposit_var2');
     if (shouldErrorInvestSum) {
       setError('Минимальная сумма — 60 000 ₽');
       return;
     }
 
     setSteps('step2');
-  };
-
-  const goToConfirmStep3 = () => {
-    setSteps('step-confirm3');
   };
 
   const handleChangeInput = (_: React.ChangeEvent<HTMLInputElement> | null, { value }: { value: number | null }) => {
@@ -252,126 +235,6 @@ export const App = () => {
   };
   if (thxShow) {
     return <ThxLayout />;
-  }
-
-  if (steps === 'step3') {
-    return (
-      <>
-        <div className={appSt.container}>
-          <Typography.Text view="caps" style={{ marginTop: '1rem' }}>
-            ШАГ 3 из 3
-          </Typography.Text>
-
-          <Typography.TitleResponsive tag="h1" view="large" font="system" weight="semibold">
-            Открытие вклада
-          </Typography.TitleResponsive>
-
-          <div>
-            <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
-              Номер договора
-            </Typography.Text>
-            <Typography.Text view="primary-medium">№{docNumberVklad}</Typography.Text>
-          </div>
-          <div>
-            <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
-              Сумма взноса
-            </Typography.Text>
-            <Typography.Text view="primary-medium">{vkladSum.toLocaleString('ru-RU')} ₽</Typography.Text>
-          </div>
-          <div>
-            <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
-              Процент по вкладу
-            </Typography.Text>
-            <Typography.Text view="primary-medium">
-              {(investPeriodData.vkladPercent * 100).toLocaleString('ru-RU')}%
-            </Typography.Text>
-          </div>
-          <div>
-            <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
-              Срок вклада
-            </Typography.Text>
-            <Typography.Text view="primary-medium">{investPeriodData.title}</Typography.Text>
-          </div>
-          <div>
-            <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
-              Email
-            </Typography.Text>
-            <Typography.Text view="primary-medium">{emailRu}</Typography.Text>
-          </div>
-        </div>
-
-        <Gap size={128} />
-
-        <div className={appSt.bottomBtn()}>
-          <Button block view="primary" onClick={() => setSteps('step4')}>
-            Оплатить вклад
-          </Button>
-        </div>
-      </>
-    );
-  }
-
-  if (steps === 'step-confirmed3') {
-    return (
-      <div style={{ backgroundColor: '#494949', minHeight: '100dvh' }}>
-        <div className={appSt.container}>
-          <div>
-            <Typography.Text
-              view="component-primary"
-              color="primary-inverted"
-              style={{ textAlign: 'center', marginTop: '1rem' }}
-              tag="p"
-              defaultMargins={false}
-            >
-              Операция выполнена
-            </Typography.Text>
-            <Typography.Text
-              view="secondary-large"
-              color="secondary-inverted"
-              style={{ textAlign: 'center' }}
-              tag="p"
-              defaultMargins={false}
-            >
-              Текущий счёт
-            </Typography.Text>
-          </div>
-
-          <div className={appSt.box4}>
-            <div style={{ marginTop: '-3rem' }}>
-              <SuperEllipse size={80} backgroundColor="#0CC44D">
-                <CheckmarkMIcon width={30} height={30} color="#fff" />
-              </SuperEllipse>
-            </div>
-            <Typography.TitleResponsive
-              tag="h1"
-              view="medium"
-              font="system"
-              weight="semibold"
-              style={{ textAlign: 'center', marginTop: '1rem' }}
-            >
-              {vkladSum.toLocaleString('ru-RU')} ₽
-            </Typography.TitleResponsive>
-            <Typography.Text view="primary-small">Деньги зарезервированы и спишутся после открытия вклада</Typography.Text>
-            <Typography.Text view="primary-small" color="secondary">
-              Договор №{docNumberPds}
-            </Typography.Text>
-          </div>
-        </div>
-
-        <Gap size={128} />
-
-        <div className={appSt.bottomBtn({ confirmed: true })}>
-          <Button
-            block
-            view="secondary"
-            onClick={() => setSteps('step3')}
-            style={{ backgroundColor: '#FFFFFF24', color: '#fff' }}
-          >
-            Открыть вклад
-          </Button>
-        </div>
-      </div>
-    );
   }
 
   if (withOtpCode) {
@@ -405,26 +268,50 @@ export const App = () => {
     return (
       <>
         <div className={appSt.container}>
-          <Typography.Text view="caps" style={{ marginTop: '1rem' }}>
-            ШАГ 2 из 3
-          </Typography.Text>
-
-          <Typography.TitleResponsive tag="h1" view="large" font="system" weight="semibold">
-            Открытие ПДС
+          <Typography.TitleResponsive tag="h1" view="large" font="system" weight="semibold" style={{ marginTop: '1rem' }}>
+            Всё проверьте, и можно оплатить
           </Typography.TitleResponsive>
 
           <div>
             <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
               Номер договора
             </Typography.Text>
-            <Typography.Text view="primary-medium">№{docNumberPds}</Typography.Text>
+            <Typography.Text view="primary-medium">№{docNumberVklad}</Typography.Text>
           </div>
           <div>
             <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
-              Сумма взноса
+              Общая сумма взноса
+            </Typography.Text>
+            <Typography.Text view="primary-medium">{sum.toLocaleString('ru-RU')} ₽</Typography.Text>
+          </div>
+          <div>
+            <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
+              Сумма ПДС
             </Typography.Text>
             <Typography.Text view="primary-medium">{pdsSum.toLocaleString('ru-RU')} ₽</Typography.Text>
           </div>
+          <div>
+            <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
+              Сумма на вклад
+            </Typography.Text>
+            <Typography.Text view="primary-medium">{vkladSum.toLocaleString('ru-RU')} ₽</Typography.Text>
+          </div>
+
+          <div>
+            <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
+              Срок вклада
+            </Typography.Text>
+            <Typography.Text view="primary-medium">{investPeriodData.title}</Typography.Text>
+          </div>
+          <div>
+            <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
+              Процент по вкладу
+            </Typography.Text>
+            <Typography.Text view="primary-medium">
+              {(investPeriodData.vkladPercent * 100).toLocaleString('ru-RU')}%
+            </Typography.Text>
+          </div>
+
           <div>
             <Typography.Text view="primary-small" color="secondary" tag="p" defaultMargins={false}>
               Email
@@ -436,11 +323,15 @@ export const App = () => {
         <Gap size={128} />
 
         <div className={appSt.bottomBtn()}>
-          <Typography.Text view="primary-small" color="secondary" style={{ textAlign: 'center' }}>
-            После откроем вклад на тех же условиях
-          </Typography.Text>
-          <Button block view="primary" onClick={goToConfirmStep3}>
-            Оплатить ПДС
+          <Button
+            block
+            view="primary"
+            onClick={() => {
+              window.gtag('event', '7106_click_pay_pds_deposit_var2');
+              setSteps('step3');
+            }}
+          >
+            Оплатить
           </Button>
         </div>
       </>
@@ -616,11 +507,8 @@ export const App = () => {
         <Gap size={128} />
 
         <div className={appSt.bottomBtn()}>
-          <Typography.Text view="primary-small" color="secondary" style={{ textAlign: 'center' }}>
-            После откроем вклад на тех же условиях
-          </Typography.Text>
           <Button block view="primary" onClick={goToStep2}>
-            Открыть ПДС
+            Открыть продукты
           </Button>
         </div>
       </>
@@ -753,7 +641,7 @@ export const App = () => {
             <div key={index}>
               <div
                 onClick={() => {
-                  window.gtag('event', '6927_card_faq', { faq: String(index + 1), var: 'var2' });
+                  window.gtag('event', '7106_bundle_faq', { faq: String(index + 1), var: 'var2' });
 
                   setCollapsedItem(items =>
                     items.includes(String(index + 1))
@@ -790,7 +678,14 @@ export const App = () => {
       <Gap size={96} />
 
       <div className={appSt.bottomBtn()}>
-        <Button block view="primary" onClick={() => setSteps('step1')}>
+        <Button
+          block
+          view="primary"
+          onClick={() => {
+            window.gtag('event', '7106_start_open_bundle', { var: 'var2' });
+            setSteps('step1');
+          }}
+        >
           Открыть Вклад + ПДС
         </Button>
       </div>
