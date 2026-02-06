@@ -37,6 +37,7 @@ import {
   randomEmailRu,
   randomOtpCode,
 } from './utils/calc';
+import { sendDataToGA } from './utils/events';
 import { round } from './utils/round';
 
 const impItems = [
@@ -202,18 +203,11 @@ export const App = () => {
   }, []);
 
   const submit = () => {
-    // sendDataToGA({
-    //   autopayments: Number(checked) as 1 | 0,
-    //   limit: Number(checked2) as 1 | 0,
-    //   limit_sum: limit ?? 0,
-    //   insurance: Number(checked3) as 1 | 0,
-    //   email: email ? 1 : 0,
-    // }).then(() => {
-    //   LS.setItem(LSKeys.ShowThx, true);
-    //   setThx(true);
-    //   setLoading(false);
-    // });
+    sendDataToGA({
+      sum,
+    });
     setThx(true);
+    LS.setItem(LSKeys.ShowThx, true);
   };
 
   const goToStep2 = () => {
