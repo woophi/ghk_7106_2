@@ -190,8 +190,7 @@ export const App = () => {
     () => {
       window.gtag('event', '7106_sms_pds_deposit', { var: 'var2' });
 
-      setThx(true);
-      // TODO Submit
+      submit();
     },
     withOtpCode ? 3500 : null,
   );
